@@ -7,30 +7,30 @@ from abc import ABC, abstractmethod
 from typing import List,Tuple,Callable
 
 class Role(Enum):
-    system="system"
-    user="user"
-    assistant="assistant"
+    SYSTEM="system"
+    USER="user"
+    ASSISTANT="assistant"
 
 class MessageType(Enum):
-    text="text"
-    image="image"
+    TEXT="text"
+    IMAGE="image"
 
 class Message:
-    role:str
-    type:str
+    role:Role
+    type:MessageType
     content:str
-    def __init__(self,role:str,type:str,content:str):
+    def __init__(self,role:Role,type:MessageType,content:str):
         self.role=role
         self.type=type
         self.content=content
 
     def to_dict(self):
         #暂时忽略 type
-        return {"role":self.role,"content":self.content}
+        return {"role":self.role.value,"content":self.content}
     
     @staticmethod
     def from_completion_choice(choice:Choice):
-        return Message(choice.message.role,"text",choice.message.content)
+        return Message(choice.message.role,MessageType.TEXT,choice.message.content)
 
 class Context:
     system_prompt:str

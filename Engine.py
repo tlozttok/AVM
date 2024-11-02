@@ -30,7 +30,7 @@ class Message:
     
     @staticmethod
     def from_completion_choice(choice:Choice):
-        return Message(choice.message.role,MessageType.TEXT,choice.message.content)
+        return Message(MessageType(choice.message.role),MessageType.TEXT,choice.message.content)
 
 class Context:
     system_prompt:str
@@ -47,7 +47,7 @@ class Context:
         raw_system_prompt=self.system_prompt
         for info in self.information:
             raw_system_prompt+=f"\n{info}"
-        return Message("system","text",raw_system_prompt)
+        return Message(Role.SYSTEM,MessageType.TEXT,raw_system_prompt)
 
     @property
     def raw_messages(self):

@@ -1,8 +1,19 @@
 
 
-from openai import OpenAI 
+from enum import Enum
+from openai import OpenAI
+from openai.types.chat.chat_completion import ChatCompletion,Choice
 from abc import ABC, abstractmethod
-from typing import List,Tuple
+from typing import List,Tuple,Callable
+
+class Role(Enum):
+    system="system"
+    user="user"
+    assistant="assistant"
+
+class MessageType(Enum):
+    text="text"
+    image="image"
 
 class Message:
     role:str
@@ -16,6 +27,10 @@ class Message:
     def to_dict(self):
         #暂时忽略 type
         return {"role":self.role,"content":self.content}
+    
+    @staticmethod
+    def from_completion_choice(choice:Choice):
+        return Message(choice.message.role,"text",choice.message.content)
 
 class Context:
     system_prompt:str
@@ -49,7 +64,11 @@ class Routine(ABC):
         pass
 
     @abstractmethod
-    def get_next_step(self,response:Message,op_ptr:int)->Message:
+    def get_next_operate(self,response:Message,op_ptr:int)->Message:
+        pass
+
+    @abstractmethod
+    def get_next_message_proxy(self,response:Message,op_ptr:int)->Callable[[List[Message]],Message]:
         pass
 
 class Engine:
@@ -61,10 +80,18 @@ class Engine:
     
     def tick_execution(self):
         func,op_ptr = self.function_stack[-1]
-        next_message=func.get_next_step(self.context_stack[-1].messages[-1],op_ptr)
+        next_message=func.get_next_operate(self.context_stack[-1].messages[-1],op_ptr)
         self.context_stack[-1].messages.append(next_message)
-        response = self.client.chat.completions.create(self.context_stack[-1].completion_args)
+        response:ChatCompletion = self.client.chat.completions.create(self.context_stack[-1].completion_args)
+        response_messages=[Message.from_completion_choice(choice) for choice in response.choices]
+        message_proxy=func.get_next_message_proxy(next_message,op_ptr)
+        next_message=message_proxy(response_messages)
+        self.context_stack[-1].messages.append(next_message)
+        
+    def process_tool_call(self):
         ...
+        
+        
 
     
 

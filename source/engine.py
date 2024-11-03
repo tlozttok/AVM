@@ -19,7 +19,8 @@ class Engine:
     client:OpenAI
 
     def call_subroutine(self,subroutine:Subroutine):
-        ...
+        self.function_stack.append((subroutine,0))
+        self.context_stack.append(subroutine.get_init_context())
 
     def tick_execution(self):
         func,op_ptr = self.function_stack[-1]
@@ -53,3 +54,5 @@ class Engine:
 
     def process_tool_call(self,message:Message)->Message|Subroutine:
         tool_calls=message.tool_calls
+        for tool_call in tool_calls:
+            ...

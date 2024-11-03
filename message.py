@@ -6,7 +6,7 @@ from openai.types.chat.chat_completion_message import ChatCompletionMessageToolC
 from abc import ABC, abstractmethod
 from typing import List,Tuple,Callable,Literal
 
-from type import MessageType, Role
+from .type import MessageType, Role
 
 
 class Message:

@@ -6,10 +6,10 @@ from openai.types.chat.chat_completion_message import ChatCompletionMessageToolC
 from abc import ABC, abstractmethod
 from typing import List,Tuple,Callable,Literal
 
-from context import Context
-from message import Message
-from routine import Routine
-from type import Role
+from .context import Context
+from .message import Message
+from .routine import Routine
+from .type import Role
 
 
 class Engine:

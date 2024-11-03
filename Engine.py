@@ -21,16 +21,21 @@ class Engine:
 
     def tick_execution(self):
         func,op_ptr = self.function_stack[-1]
-        next_message=func.get_next_operate(self.context_stack[-1].messages[-1],op_ptr)
-        self.context_stack[-1].messages.append(next_message)
-        response:ChatCompletion = self.client.chat.completions.create(**self.context_stack[-1].completion_args)
-        response_messages=[Message.from_completion_choice(choice) for choice in response.choices]
-        message_proxy=func.get_next_message_proxy(next_message,op_ptr)
-        next_message=message_proxy(response_messages)
-        if next_message.role == Role.TOOL:
-            self.process_tool_call(next_message)
-            return
-        self.context_stack[-1].messages.append(next_message)
+        next_routine_message=func.get_next_operate(self.context_stack[-1].messages[-1],op_ptr)
+        if next_routine_message is not None:
+            self.context_stack[-1].messages.append(next_routine_message)
+            response:ChatCompletion = self.client.chat.completions.create(**self.context_stack[-1].completion_args)
+            response_messages=[Message.from_completion_choice(choice) for choice in response.choices]
+            message_proxy=func.get_next_message_proxy(self.context_stack[-1].messages[-1],op_ptr)
+            response_message=message_proxy(response_messages)
+            if response_message.role == Role.TOOL:
+                assistant_response_message=self.process_tool_call(response_message)
+            else:
+                assistant_response_message=response_message
+            self.context_stack[-1].messages.append(assistant_response_message)
+        else:
+            self.function_stack.pop()
+            self.context_stack.pop()
 
-    def process_tool_call(self,message:Message):
+    def process_tool_call(self,message:Message)->Message:
         ...

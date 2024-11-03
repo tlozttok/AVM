@@ -16,11 +16,16 @@ from .type import Role
 class Engine:
     function_stack:List[Tuple[Routine,int]]
     context_stack:List[Context]
+    __last_layer_subroutine_id:List[int]=[] #看成上一层的最后一个函数与当前层的函数的距离
     client:OpenAI
 
+    def new_subroutine_layer(self):
+        self.__last_layer_subroutine_id.append(0)
     def call_subroutine(self,subroutine:Subroutine):
         self.function_stack.append((subroutine,0))
         self.context_stack.append(subroutine.get_init_context())
+        self.__last_layer_subroutine_id[-1]+=1
+
 
     def tick_execution(self):
         func,op_ptr = self.function_stack[-1]
@@ -47,9 +52,8 @@ class Engine:
         else:
             subroutine=self.function_stack.pop()[0]
             if isinstance(subroutine,Subroutine):
-                return_message=subroutine.get_return_message()
-                self.context_stack[-1].messages.append(return_message)
-            self.context_stack.pop()
+                return_message=subroutine.get_return_message(self.context_stack.pop())
+                self.context_stack[-self.__last_layer_subroutine_id[-1]].messages.append(return_message)
             return
 
     def process_tool_call(self,message:Message)->Message|Subroutine:

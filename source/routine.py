@@ -33,7 +33,7 @@ class Subroutine(Routine,ABC):
     params:FunctionParameterDescription
 
     @abstractmethod
-    def get_return_message(self)->None|Message:
+    def get_return_message(self,final_context:Context)->None|Message:
         """
         对于一个子例程，结束后应该返回一个tool_call消息，做为调用它的例程期望的工具返回值
         :return:tool_call消息

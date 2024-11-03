@@ -17,4 +17,4 @@ class Role(Enum):
 class MessageType(Enum):
     TEXT="text"
     IMAGE="image"
-    TOOL_CALL="tool_call"
+    TOOL_CALL="tool_call" #必要性存疑

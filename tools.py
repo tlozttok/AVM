@@ -8,18 +8,17 @@ from typing import List,Tuple,Callable,Literal
 
 from .functions import FunctionDiscription
 
-
-class ToolDiscription:
+class ToolDescription:
     type:Literal["function"]
-    funcion:FunctionDiscription
+    function:FunctionDiscription
 
     def to_dict(self)->dict:
         ...
 
 
 class Tool(ABC):
-    description:ToolDiscription
-    def __init__(self,description:ToolDiscription):
+    description:ToolDescription
+    def __init__(self, description:ToolDescription):
         self.description=description
 
     @property

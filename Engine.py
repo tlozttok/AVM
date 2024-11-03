@@ -23,7 +23,7 @@ class Engine:
         func,op_ptr = self.function_stack[-1]
         next_message=func.get_next_operate(self.context_stack[-1].messages[-1],op_ptr)
         self.context_stack[-1].messages.append(next_message)
-        response:ChatCompletion = self.client.chat.completions.create(self.context_stack[-1].completion_args)
+        response:ChatCompletion = self.client.chat.completions.create(**self.context_stack[-1].completion_args)
         response_messages=[Message.from_completion_choice(choice) for choice in response.choices]
         message_proxy=func.get_next_message_proxy(next_message,op_ptr)
         next_message=message_proxy(response_messages)

@@ -7,6 +7,8 @@ from abc import ABC, abstractmethod
 from typing import List,Tuple,Callable,Literal
 
 from .functions import FunctionDescription
+from .message import Message
+from .routine import Subroutine
 
 class ToolDescription:
     type:Literal["function"]
@@ -18,8 +20,6 @@ class ToolDescription:
 
 class Tool(ABC):
     description:ToolDescription
-    def __init__(self, description:ToolDescription):
-        self.description=description
 
     @property
     def tool_info(self)->dict:
@@ -38,3 +38,6 @@ class ToolSet:
     @property
     def tools_info(self)->List[dict]:
         return [tool.tool_info for tool in self.tools]
+
+    def execute(self,tool_calls:List[ChatCompletionMessageToolCall])->List[Message|Subroutine]:
+        ...

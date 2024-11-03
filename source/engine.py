@@ -37,17 +37,12 @@ class Engine:
             message_proxy=func.get_next_message_proxy(self.context_stack[-1].messages[-1],op_ptr)
             response_message=message_proxy(response_messages)
             if len(response_message.tool_calls)>0:
-                tool_return=self.process_tool_call(response_message)
-                if isinstance(tool_return,Message):
-                    assistant_response_message=tool_return
-                elif isinstance(tool_return,Subroutine):
-                    self.call_subroutine(tool_return)
+                should_break=self.process_tool_call(response_message)
+                if should_break:
                     return
-                else:
-                    raise Exception("This exception should never be raised")
             else:
                 assistant_response_message=response_message
-            self.context_stack[-1].messages.append(assistant_response_message)
+                self.context_stack[-1].messages.append(assistant_response_message)
             return
         else:
             subroutine=self.function_stack.pop()[0]
@@ -56,7 +51,18 @@ class Engine:
                 self.context_stack[-self.__last_layer_subroutine_id[-1]].messages.append(return_message)
             return
 
-    def process_tool_call(self,message:Message)->Message|Subroutine:
+    def process_tool_call(self,message:Message)->bool:
         tool_calls=message.tool_calls
-        for tool_call in tool_calls:
-            ...
+        results=self.context_stack[-1].tools.execute(tool_calls)
+        tool_messages=[m for m in results if isinstance(m,Message)]
+        subroutines=[s for s in results if isinstance(s,Subroutine)]
+        if len(tool_messages)>0:
+            for tool_messages in tool_messages:
+                self.context_stack[-1].messages.append(tool_messages)
+        if len(subroutines)>0:
+            for subroutine in subroutines:
+                self.call_subroutine(subroutine)
+            result=True
+        else:
+            result=False
+        return result

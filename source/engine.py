@@ -18,7 +18,8 @@ class Engine:
     context_stack:List[Context]
     client:OpenAI
 
-
+    def call_subroutine(self,subroutine:Subroutine):
+        ...
 
     def tick_execution(self):
         func,op_ptr = self.function_stack[-1]
@@ -30,16 +31,25 @@ class Engine:
             message_proxy=func.get_next_message_proxy(self.context_stack[-1].messages[-1],op_ptr)
             response_message=message_proxy(response_messages)
             if response_message.role == Role.TOOL:
-                assistant_response_message=self.process_tool_call(response_message)
+                tool_return=self.process_tool_call(response_message)
+                if isinstance(tool_return,Message):
+                    assistant_response_message=tool_return
+                elif isinstance(tool_return,Subroutine):
+                    self.call_subroutine(tool_return)
+                    return
+                else:
+                    raise Exception("This exception should never be raised")
             else:
                 assistant_response_message=response_message
             self.context_stack[-1].messages.append(assistant_response_message)
+            return
         else:
             subroutine=self.function_stack.pop()[0]
             if isinstance(subroutine,Subroutine):
                 return_message=subroutine.get_return_message()
                 self.context_stack[-1].messages.append(return_message)
             self.context_stack.pop()
+            return
 
-    def process_tool_call(self,message:Message)->Message:
-        ...
+    def process_tool_call(self,message:Message)->Message|Subroutine:
+        tool_calls=message.tool_calls

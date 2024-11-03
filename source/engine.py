@@ -31,7 +31,7 @@ class Engine:
             response_messages=[Message.from_completion_choice(choice) for choice in response.choices]
             message_proxy=func.get_next_message_proxy(self.context_stack[-1].messages[-1],op_ptr)
             response_message=message_proxy(response_messages)
-            if response_message.role == Role.TOOL:
+            if len(response_message.tool_calls)>0:
                 tool_return=self.process_tool_call(response_message)
                 if isinstance(tool_return,Message):
                     assistant_response_message=tool_return

@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from typing import List,Tuple,Callable,Literal
 
 
-class FunctionParameterDiscription:
+class FunctionParameterDescription:
     name:str
     description:str
     type:str
@@ -15,10 +15,10 @@ class FunctionParameterDiscription:
     enum:List[str]
 
 
-class FunctionDiscription:
+class FunctionDescription:
     name:str
     description:str
-    parameters:List[FunctionParameterDiscription]
+    parameters:List[FunctionParameterDescription]
 
     def to_dict(self)->dict:
         ...

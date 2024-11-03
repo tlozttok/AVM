@@ -6,6 +6,7 @@ from openai.types.chat.chat_completion_message import ChatCompletionMessageToolC
 from abc import ABC, abstractmethod
 from typing import List,Tuple,Callable,Literal
 
+from .routine import Subroutine
 from .context import Context
 from .message import Message
 from .routine import Routine
@@ -34,7 +35,10 @@ class Engine:
                 assistant_response_message=response_message
             self.context_stack[-1].messages.append(assistant_response_message)
         else:
-            self.function_stack.pop()
+            subroutine=self.function_stack.pop()[0]
+            if isinstance(subroutine,Subroutine):
+                return_message=subroutine.get_return_message()
+                self.context_stack[-1].messages.append(return_message)
             self.context_stack.pop()
 
     def process_tool_call(self,message:Message)->Message:

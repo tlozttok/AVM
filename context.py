@@ -17,17 +17,24 @@ class Context:
     messages:List[Message]
     tools:ToolSet
     settings:dict #以后提取成类
-    def __init__(self):
-        self.system_prompt = ""
-        self.information = []
-        self.messages = []
+    def __init__(self,
+                 system_prompt:str,
+                 information:List[str]=None,
+                 messages:List[Message]=None,
+                 tools:ToolSet=ToolSet(),
+                 settings:dict=None):
+        self.system_prompt = system_prompt
+        self.information = information if information else []
+        self.messages = messages if messages else []
+        self.tools = tools
+        self.settings = settings if settings else {}
 
     @property
     def raw_system_prompt(self):
         raw_system_prompt=self.system_prompt
         for info in self.information:
             raw_system_prompt+=f"\n{info}"
-        return Message(Role.SYSTEM,MessageType.TEXT,raw_system_prompt)
+        return Message(Role.SYSTEM,MessageType.TEXT,content=raw_system_prompt)
 
     @property
     def raw_messages(self):

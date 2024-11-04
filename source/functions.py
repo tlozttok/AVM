@@ -14,6 +14,12 @@ class FunctionParameterDescription:
     required:bool
     enum:List[str]
 
+    def to_dict(self)->dict:
+        result= {"description": self.description, "type": self.type}
+        if self.enum:
+            result["enum"]=self.enum
+        return result
+
 
 class FunctionDescription:
     name:str
@@ -21,4 +27,10 @@ class FunctionDescription:
     parameters:List[FunctionParameterDescription]
 
     def to_dict(self)->dict:
-        ...
+        result= {"name": self.name, "description": self.description,
+                 "parameters": {"type": "object", "properties": {}, "required": []}}
+        for param in self.parameters:
+            result["parameters"]["properties"][param.name]=param.to_dict()
+            if param.required:
+                result["parameters"]["required"].append(param.name)
+        return result

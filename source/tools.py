@@ -15,7 +15,7 @@ class ToolDescription:
     function:FunctionDescription
 
     def to_dict(self)->dict:
-        ...
+        return {"type":self.type, "function":self.function.to_dict()}
 
 
 class Tool(ABC):
@@ -32,12 +32,18 @@ class Tool(ABC):
 
 class ToolSet:
     tools:List[Tool]
+    tools_dict:dict[str,Tool]
     def __init__(self):
         self.tools=[]
+        self.tools_dict={}
 
     @property
     def tools_info(self)->List[dict]:
         return [tool.tool_info for tool in self.tools]
+
+    def execute_once(self,tool_call:ChatCompletionMessageToolCall)->Message|Subroutine:
+        tool=self.tools_dict[tool_call.function.name]
+        ...
 
     def execute(self,tool_calls:List[ChatCompletionMessageToolCall])->List[Message|Subroutine]:
         ...

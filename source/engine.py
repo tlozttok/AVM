@@ -19,14 +19,6 @@ class Engine:
     __last_layer_subroutine_id:List[int]=[] #看成上一层的最后一个函数与当前层的函数的距离
     client:OpenAI
 
-    def new_subroutine_layer(self):
-        self.__last_layer_subroutine_id.append(0)
-    def call_subroutine(self,subroutine:Subroutine):
-        self.function_stack.append((subroutine,0))
-        self.context_stack.append(subroutine.get_init_context())
-        self.__last_layer_subroutine_id[-1]+=1
-
-
     def tick_execution(self):
         func,op_ptr = self.function_stack[-1]
         next_routine_message=func.get_next_operate(self.context_stack[-1].messages[-1],op_ptr)
@@ -35,6 +27,13 @@ class Engine:
             return self._process_next_routine_message(message_proxy, next_routine_message)
         else:
             return self._pop_subroutine()
+
+    def _new_subroutine_layer(self):
+        self.__last_layer_subroutine_id.append(0)
+    def _call_subroutine(self, subroutine:Subroutine):
+        self.function_stack.append((subroutine,0))
+        self.context_stack.append(subroutine.get_init_context())
+        self.__last_layer_subroutine_id[-1]+=1
 
     def _pop_subroutine(self):
         subroutine = self.function_stack.pop()[0]
@@ -54,7 +53,7 @@ class Engine:
         self.context_stack[-1].messages.append(next_routine_message)
         response_message = self._get_model_response_message(message_proxy)
         if len(response_message.tool_calls) > 0:
-            should_break = self.process_tool_call(response_message)
+            should_break = self._process_tool_call(response_message)
             if should_break:
                 return
         else:
@@ -68,7 +67,7 @@ class Engine:
         response_message = message_proxy(response_messages)
         return response_message
 
-    def process_tool_call(self,message:Message)->bool:
+    def _process_tool_call(self, message:Message)->bool:
         tool_calls=message.tool_calls
         results=self.context_stack[-1].tools.execute(tool_calls)
         tool_messages=[m for m in results if isinstance(m,Message)]
@@ -77,8 +76,9 @@ class Engine:
             for tool_messages in tool_messages:
                 self.context_stack[-1].messages.append(tool_messages)
         if len(subroutines)>0:
+            self._new_subroutine_layer()
             for subroutine in subroutines:
-                self.call_subroutine(subroutine)
+                self._call_subroutine(subroutine)
             result=True
         else:
             result=False

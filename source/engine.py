@@ -14,10 +14,18 @@ from .type import Role
 
 
 class Engine:
-    function_stack:List[Tuple[Routine,int]]
-    context_stack:List[Context]
+    function_stack:List[Tuple[Routine,int]]=[]
+    context_stack:List[Context]=[]
     __last_layer_subroutine_id:List[int]=[] #看成上一层的最后一个函数与当前层的函数的距离
     client:OpenAI
+
+    def __init__(self, client:OpenAI):
+        self.client=client
+
+    def start_top_routine(self, routine:Routine):
+        if len(self.function_stack)==0 and len(self.context_stack)==0:
+            self.function_stack.append((routine,0))
+            self.context_stack.append(routine.get_init_context())
 
     def tick_execution(self):
         func,op_ptr = self.function_stack[-1]

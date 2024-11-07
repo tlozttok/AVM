@@ -6,8 +6,14 @@ from openai.types.chat.chat_completion_message import ChatCompletionMessageToolC
 from abc import ABC, abstractmethod
 from typing import List,Tuple,Callable,Literal
 
-from .type import Role, MessageType
+class Routine(ABC):
+    pass
+
+class Subroutine(Routine,ABC):
+    pass
+
 from .context import Context
+from .type import Role, MessageType
 from .message import Message
 from .functions import FunctionParameterDescription
 
@@ -16,6 +22,14 @@ class Routine(ABC):
 
     @abstractmethod
     def get_init_context(self)->Context:
+        pass
+
+    @abstractmethod
+    def get_first_operate(self)->Message:
+        pass
+
+    @abstractmethod
+    def get_first_message_proxy(self)->Callable[[List[Message]],Message]:
         pass
 
     @abstractmethod
@@ -44,7 +58,17 @@ class TestCommonChatRoutine(Routine):
 
 
     def get_init_context(self) ->Context:
-        return Context("你是一个英语翻译，用户每次会给出一个英语单词，将其翻译成中文")
+        test_setting={"model":"glm-4-flash"}
+        return Context("你是一个英语翻译，用户每次会给出一个英语单词，将其翻译成中文",settings=test_setting)
+
+    def get_first_operate(self) ->Message:
+        user_input = input()
+        return Message(Role.USER, MessageType.TEXT, content=user_input)
+
+    def get_first_message_proxy(self) ->Callable[[List[Message]],Message]:
+        def proxy(messages:List[Message])->Message:
+            return messages[0]
+        return proxy
 
     def get_next_operate(self,response:Message,op_ptr:int) ->Message:
         print(response.content)

@@ -29,8 +29,13 @@ class Engine:
 
     def tick_execution(self):
         func,op_ptr = self.function_stack[-1]
-        next_routine_message=func.get_next_operate(self.context_stack[-1].messages[-1],op_ptr)
-        message_proxy = func.get_next_message_proxy(self.context_stack[-1].messages[-1], op_ptr)
+        self.function_stack[-1]=(func,op_ptr+1)
+        if op_ptr!=0:
+            next_routine_message=func.get_next_operate(self.context_stack[-1].messages[-1],op_ptr)
+            message_proxy = func.get_next_message_proxy(self.context_stack[-1].messages[-1], op_ptr)
+        else:
+            next_routine_message=func.get_first_operate()
+            message_proxy = func.get_first_message_proxy()
         if next_routine_message is not None:
             return self._process_next_routine_message(message_proxy, next_routine_message)
         else:

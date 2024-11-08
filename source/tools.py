@@ -16,6 +16,10 @@ class ToolDescription:
     type:Literal["function"]
     function:FunctionDescription
 
+    def __init__(self):
+        self.type="function"
+        self.function=FunctionDescription()
+
     def to_dict(self)->dict:
         return {"type":self.type, "function":self.function.to_dict()}
 
@@ -33,17 +37,21 @@ class Tool(ABC):
 
 class ToolSet:
     tools:List[Tool]
-    tools_dict:dict[str,Tool]
+    function_tools_dict:dict[str,Tool]
     def __init__(self):
         self.tools=[]
-        self.tools_dict={}
+        self.function_tools_dict={}
+
+    def add_tool(self,tool:Tool)->None:
+        self.tools.append(tool)
+        self.function_tools_dict[tool.description.function.name]=tool
 
     @property
     def tools_info(self)->List[dict]:
         return [tool.tool_info for tool in self.tools]
 
     def execute_once(self,tool_call:ChatCompletionMessageToolCall)->Message|routine.Subroutine|None:
-        tool=self.tools_dict.get(tool_call.function.name)
+        tool=self.function_tools_dict.get(tool_call.function.name)
         if not tool:
             return None
         return tool.call(tool_call.function.arguments) #TODO:如果AI的回答有问题，应该通过异常处理机制回退处理步骤，因此需要在项目中建立异常体系

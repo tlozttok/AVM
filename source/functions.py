@@ -14,6 +14,13 @@ class FunctionParameterDescription:
     required:bool
     enum:List[str]
 
+    def __init__(self, name:str, description:str, type:str, required:bool=False, enum:List[str]=None):
+        self.name=name
+        self.description=description
+        self.type=type
+        self.required=required
+        self.enum=enum
+
     def to_dict(self)->dict:
         result= {"description": self.description, "type": self.type}
         if self.enum:
@@ -25,6 +32,11 @@ class FunctionDescription:
     name:str
     description:str
     parameters:List[FunctionParameterDescription]
+
+    def __init__(self, name:str, description:str, parameters:List[FunctionParameterDescription]):
+        self.name=name
+        self.description=description
+        self.parameters=parameters
 
     def to_dict(self)->dict:
         result= {"name": self.name, "description": self.description,

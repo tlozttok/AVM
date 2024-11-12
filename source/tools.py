@@ -1,4 +1,4 @@
-
+import json
 from enum import Enum
 from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion,Choice
@@ -16,9 +16,9 @@ class ToolDescription:
     type:Literal["function"]
     function:FunctionDescription
 
-    def __init__(self):
+    def __init__(self,function:FunctionDescription):
         self.type="function"
-        self.function=FunctionDescription()
+        self.function=function
 
     def to_dict(self)->dict:
         return {"type":self.type, "function":self.function.to_dict()}
@@ -26,13 +26,25 @@ class ToolDescription:
 
 class Tool(ABC):
     description:ToolDescription
+
+    def __init__(self,description:ToolDescription):
+        self.description=description
+
     @property
     def tool_info(self)->dict:
         return self.description.to_dict()
 
     @abstractmethod
-    def call(self,args:str)->Message|routine.Subroutine:
+    def call(self,args:dict)->Message|routine.Subroutine:
         pass
+
+class ToolAdapter(Tool):
+    def __init__(self,description:ToolDescription, call:Callable):
+        super().__init__(description)
+        self.call=call
+
+    def call(self,args:str)->Message:
+        return self.call(args)
 
 
 class ToolSet:
@@ -54,7 +66,9 @@ class ToolSet:
         tool=self.function_tools_dict.get(tool_call.function.name)
         if not tool:
             return None
-        return tool.call(tool_call.function.arguments) #TODO:如果AI的回答有问题，应该通过异常处理机制回退处理步骤，因此需要在项目中建立异常体系
+        result=tool.call(json.loads(tool_call.function.arguments)) #TODO:如果AI的回答有问题，应该通过异常处理机制回退处理步骤，因此需要在项目中建立异常体系
+        result.tool_call_id=tool_call.id
+        return result
 
     def execute(self,tool_calls:List[ChatCompletionMessageToolCall])->List[Message|routine.Subroutine]:
         results=[]

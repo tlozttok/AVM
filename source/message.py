@@ -14,11 +14,13 @@ class Message:
     type:MessageType
     content:str
     tool_calls:List[ChatCompletionMessageToolCall]
-    def __init__(self, role:Role, message_type:MessageType, *, content:str=None, tool_calls:List[ChatCompletionMessageToolCall]=None):
+    tool_call_id:str
+    def __init__(self, role:Role, message_type:MessageType, *, content:str=None, tool_calls:List[ChatCompletionMessageToolCall]=None, tool_id:str=None):
         self.role=role
         self.type=message_type
         self.content=content
         self.tool_calls=tool_calls if tool_calls else []
+        self.tool_call_id=tool_id
 
     def to_dict(self):
         #暂时忽略 type

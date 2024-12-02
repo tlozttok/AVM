@@ -13,7 +13,7 @@ from .routine import Routine
 from .type import Role
 
 
-class Engine:
+class Core:
     function_stack:List[Tuple[Routine,int]]=[]
     context_stack:List[Context]=[]
     __last_layer_subroutine_id:List[int]=[] #看成上一层的最后一个函数与当前层的函数的距离

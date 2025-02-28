@@ -35,7 +35,7 @@ class Tool(ABC):
         return self.description.to_dict()
 
     @abstractmethod
-    def call(self,args:dict)->Message|routine.Subroutine:
+    def call(self,args:dict)->Message:
         pass
 
 class ToolAdapter(Tool):
@@ -62,7 +62,7 @@ class ToolSet:
     def tools_info(self)->List[dict]:
         return [tool.tool_info for tool in self.tools]
 
-    def execute_once(self,tool_call:ChatCompletionMessageToolCall)->Message|routine.Subroutine|None:
+    def execute_once(self,tool_call:ChatCompletionMessageToolCall)->Message|None:
         tool=self.function_tools_dict.get(tool_call.function.name)
         if not tool:
             return None
@@ -70,7 +70,7 @@ class ToolSet:
         result.tool_call_id=tool_call.id
         return result
 
-    def execute(self,tool_calls:List[ChatCompletionMessageToolCall])->List[Message|routine.Subroutine]:
+    def execute(self,tool_calls:List[ChatCompletionMessageToolCall])->List[Message]:
         results=[]
         for tool_call in tool_calls:
             result=self.execute_once(tool_call)

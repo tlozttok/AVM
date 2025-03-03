@@ -7,8 +7,16 @@ class 信息持久化:
     raise NotImplementedError
 
 class 信息类型检查:
-
+    """
+    该类用于在运行时进行动态类型检查，运行前类型检查和运行时普通类型检查由python完成
+    该类检查的是信息的语义类型。当AI认为类型正确时，类型就正确
+    """
     raise NotImplementedError
+
+class 鸭子包装器:
+    """
+    当类型通过语义检查，但python语法不正确时，用该包装器进行类型转换。这应当是一个AI元
+    """
 
 class 信息:
     pass

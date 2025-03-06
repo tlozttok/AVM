@@ -43,6 +43,9 @@ class Context:
     def append_assistant_prompt(self,prompt:str):
         self.messages.append(Message(MessageRole.ASSISTANT,prompt))
 
+    def add_message(self,message:Message):
+        self.messages.append(message)
+
     def send(self):
         # 发送请求
         raise NotImplementedError

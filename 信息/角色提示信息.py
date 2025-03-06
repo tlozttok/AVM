@@ -1,3 +1,4 @@
+from core.AI元 import 角色提示生成AI元, 全局AI元池
 from core.Information import 信息, 信息类型
 from core.通信层 import Message, MessageRole
 
@@ -17,9 +18,7 @@ class 角色提示信息(信息):
     行为:应然行为信息
 
     def generate_content(self):
-        # 角色提示生成器 继承 消息生成器 继承 AI元
-        # return 角色提示生成器(self.角色,self.行为)
-        raise NotImplementedError
+        return 全局AI元池.get_by_name("初始角色提示生成AI")[0].增加背景知识(self).process()[0].to_message(MessageRole.SYSTEM)
 
     def to_message(self,role:MessageRole) ->Message:
         if self.content:

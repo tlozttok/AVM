@@ -9,16 +9,20 @@ class 角色信息类型(信息类型):
 
 class 角色信息(信息):
     角色:str
+    def to_string(self) ->str:
+        return self.角色
 
 class 应然行为信息(信息):
     行为:str
+    def to_string(self) ->str:
+        return self.行为
 
 class 角色提示信息(信息):
     角色:角色信息
     行为:应然行为信息
 
     def generate_content(self):
-        return 全局AI元池.get_by_name("初始角色提示生成AI")[0].增加背景知识(self).process()[0].to_message(MessageRole.SYSTEM)
+        return f"角色:{self.角色.to_string()}\n行为:{self.行为.to_string()}\n"
 
     def to_message(self,role:MessageRole) ->Message:
         if self.content:

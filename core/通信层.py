@@ -8,6 +8,7 @@ class MessageRole(Enum):
     SYSTEM="system"
     TOOL="tool"
     USER="user"
+    INFOR="infor"
 
 class Message:
     role:MessageRole
@@ -34,8 +35,19 @@ class Context:
     def 统计AI消息数(self):
         return len(list(filter(lambda x:x.role==MessageRole.ASSISTANT,self.messages)))
 
+    def 统计用户消息数(self):
+        return len(list(filter(lambda x:x.role==MessageRole.USER,self.messages)))
+
     def set_system_prompt(self,prompt:str):
-        self.messages.insert(0,Message(MessageRole.SYSTEM,prompt))
+        if len(self.messages)==0:
+            self.messages.append(Message(MessageRole.SYSTEM,prompt))
+        else:
+            self.messages[0]=Message(MessageRole.SYSTEM,prompt)
+
+    def set_infor_prompt(self,prompt:List[str]):
+        system_prompt=self.messages[0]
+        return Message(MessageRole.SYSTEM,system_prompt.content+"\n".join(prompt))
+
 
     def append_user_prompt(self,prompt:str):
         self.messages.append(Message(MessageRole.USER,prompt))
@@ -46,6 +58,9 @@ class Context:
     def add_message(self,message:Message):
         self.messages.append(message)
 
-    def send(self):
+    def send(self,infor_prompt:List[str])->str:
         # 发送请求
         raise NotImplementedError
+
+    def clear(self):
+        self.messages=self.messages[0:1]

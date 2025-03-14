@@ -66,6 +66,9 @@ class 信息:
     def content(self,value:str):
         self._content=value
 
+    def to_string(self)->str:
+        return self.content
+
     def to_message(self,role:MessageRole)->Message:
         return Message(role,self.content)
 

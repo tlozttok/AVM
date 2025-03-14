@@ -1,9 +1,12 @@
+import asyncio
 from abc import abstractmethod
 from typing import List
 
 from core.Information import 信息
+from core.信息管道 import 信息管道
 from core.通信层 import Context, Setting, MessageRole, Message
 from 信息.角色提示信息 import 角色提示信息
+import json
 
 class 系统元:
     """
@@ -20,72 +23,91 @@ class AI元:
     """
     name:str
 
+    _知识源:asyncio.Queue[信息]
+
     背景知识:List[信息]
 
-    程序提示:List[信息]
+    程序提示:asyncio.Queue[信息]
 
     _对话内容:Context
 
-    对话结果:List[信息]
+    输出管道:List[信息管道]
 
-    def __init__(self):
+    def __init__(self,system_prompt:str):
         self._对话内容=Context(messages=[],setting=Setting())
         self.背景知识=[]
-        self.程序提示=[]
-        self.对话结果=[]
         self.name=""
+        self.system_prompt=system_prompt
+        self._对话内容.set_system_prompt(system_prompt)
+
+    async def receive(self,信息:信息):
+        await self._知识源.put(信息)
 
     @property
     def 对话轮数(self):
         return self._对话内容.统计AI消息数()
 
+    @property
+    def 半对话轮数(self):
+        return self._对话内容.统计用户消息数()
 
-    def 增加背景知识(self,新信息:信息):
-        self.背景知识.append(新信息)
-        return self
-
-    def 设置程序提示(self,程序提示:List[信息]):
-        self.程序提示=程序提示
-        return self
-
-    @abstractmethod
-    def _get_system_prompt(self):
-        raise NotImplementedError()
+    def 添加程序提示(self,程序提示:信息):
+        self.程序提示.append(程序提示)
 
 
-    def _get_user_prompt(self,对话轮数):
-        return self.程序提示[对话轮数].to_message(MessageRole.USER)
-
-    def _user_prompt_provider(self):
-        对话轮数=self.对话轮数
-        instruction=self._get_user_prompt(对话轮数)
-        while instruction:
-            yield instruction
-            instruction=self._get_user_prompt(对话轮数)
-            对话轮数+=1
 
     @abstractmethod
     def extract_result(self):
         raise NotImplementedError()
 
-    def process(self):
-        system_prompt=self._get_system_prompt()
-        self._对话内容.add_message(system_prompt)
-        for instruction in self._user_prompt_provider():
-            self._对话内容.add_message(instruction)
-            self._对话内容.send()
-        self.extract_result()
-        return self.对话结果
+    @abstractmethod
+    def ready_for_process(self):
+        raise NotImplementedError()
 
+    @abstractmethod
+    def ready_for_output(self, result:str):
+        raise NotImplementedError()
 
-class 角色提示生成AI元(AI元):
-    角色信息:角色提示信息
+    async def change(self):
+        while True:
+            change1=asyncio.create_task(self._知识源.get())
+            change2=asyncio.create_task(self.程序提示.get())
+            done, pending = await asyncio.wait(
+                [change1, change2],
+                return_when=asyncio.FIRST_COMPLETED
+            )
 
-    def _get_system_prompt(self):
-        return self.角色信息.to_message(MessageRole.SYSTEM)
+            if change1.done():
+                self.背景知识.append(change1.result())
 
-初始角色提示生成AI=角色提示生成AI元()#读取AI元()
-初始角色提示生成AI.name="初始角色提示生成AI"
+            if change2.done():
+                self._对话内容.append_user_prompt(change2.result().to_string())
+
+            for task in pending:
+                task.cancel()
+
+            if self.ready_for_process():
+                await self.process()
+
+    async def process(self):
+        result=self._对话内容.send([infor.to_string() for infor in self.背景知识])
+        if self.ready_for_output(result):
+            result=self.extract_result()
+            self._对话内容.clear()
+            for output in self.输出管道:
+                await output.receive(result)
+
+class 角色提示生成AI(AI元):
+
+    def ready_for_output(self, result: str):
+        return self.对话轮数>0
+
+    def ready_for_process(self):
+        return self.半对话轮数>0
+
+    def extract_result(self):
+        result=json.loads(self._对话内容.messages[-1].content)
+
 
 
 class AI元池:

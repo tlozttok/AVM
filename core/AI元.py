@@ -2,7 +2,7 @@ import asyncio
 from abc import abstractmethod
 from typing import List
 
-from core.Information import 信息
+from core.Information import 信息, Key
 from core.信息管道 import 信息管道
 from core.通信层 import Context, Setting, MessageRole, Message
 from 信息.角色提示信息 import 角色提示信息
@@ -31,7 +31,7 @@ class AI元:
 
     _对话内容:Context
 
-    输出管道:List[信息管道]
+    输出管道:List[信息管道|asyncio.Queue[信息]]
 
     def __init__(self,system_prompt:str):
         self._对话内容=Context(messages=[],setting=Setting())
@@ -95,7 +95,7 @@ class AI元:
             result=self.extract_result()
             self._对话内容.clear()
             for output in self.输出管道:
-                await output.receive(result)
+                await output.put(result)
 
 class 角色提示生成AI(AI元):
 
@@ -107,6 +107,12 @@ class 角色提示生成AI(AI元):
 
     def extract_result(self):
         result=json.loads(self._对话内容.messages[-1].content)
+        result_infor=[]
+        for key,value in result.items():
+            infor=信息(value,Key(key))
+            result_infor.append(infor)
+        return 信息(infor=result_infor,meta=[信息(content="角色提示词")])
+
 
 
 

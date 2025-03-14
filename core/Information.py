@@ -54,9 +54,22 @@ class 顶信息类型:
 class 底信息类型:
     描述:str = None
 
+class Key:
+    key:str
+    def __init__(self,key:str):
+        self.key=key
+
 class 信息:
     _content:str
-    type:List[信息类型] = [顶信息类型]
+    key:Key
+    infor:List[信息]
+    meta:List[信息]
+
+    def __init__(self, content:str=None, key:Key=None, infor=None, meta:List[信息]=None):
+        self.key=key
+        self.content=content
+        self.infor=infor
+        self.meta=meta
 
     @property
     def content(self)->str:

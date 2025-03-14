@@ -22,7 +22,7 @@ class 信息管道:
     def add_downstream(self,AI元:AI元,filter:Callable[[信息],bool]):
         self.下游AI元.append((AI元,filter))
 
-    async def receive(self,信息:信息):
+    async def put(self, 信息:信息):
         for AI元,filter in self.下游AI元:
             if filter(信息):
                 await AI元.receive(信息)

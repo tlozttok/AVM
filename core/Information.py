@@ -4,19 +4,20 @@ from core.通信层 import Message, MessageRole
 
 class 信息持久化:
     #信息.内容:暂时存在状态 转为 持久存在状态
-    raise NotImplementedError
+    pass
 
 class 信息类型检查:
     """
     该类用于在运行时进行动态类型检查，运行前类型检查和运行时普通类型检查由python完成
     该类检查的是信息的语义类型。当AI认为类型正确时，类型就正确
     """
-    raise NotImplementedError
+    pass
 
 class 鸭子包装器:
     """
     当类型通过语义检查，但python语法不正确时，用该包装器进行类型转换。这应当是一个AI元
     """
+    pass
 
 class 信息:
     """
@@ -59,6 +60,9 @@ class Key:
     def __init__(self,key:str):
         self.key=key
 
+    def __str__(self):
+        return self.key
+
 class 信息:
     _content:str
     key:Key
@@ -79,8 +83,22 @@ class 信息:
     def content(self,value:str):
         self._content=value
 
+    def __str__(self) -> str:
+        parts = []
+        # 处理 key
+        if self.key is not None:
+            parts.append(f"{self.key}:")
+        # 处理 content，假设实际属性是 content（根据 __init__）
+        if self.content is not None:
+            parts.append(f"{self.content},")
+        # 处理 infor，递归转换每个元素
+        if self.infor:
+            infor_str = '\n'.join(str(item) for item in self.infor)
+            parts.append(f"此外：\n{infor_str}")
+        return f"{', '.join(parts)}"
+
     def to_string(self)->str:
-        return self.content
+        return str(self)
 
     def to_message(self,role:MessageRole)->Message:
         return Message(role,self.content)

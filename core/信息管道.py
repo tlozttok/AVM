@@ -1,7 +1,6 @@
 import asyncio
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Literal
 
-from core.AI元 import AI元
 from core.Information import 信息
 
 
@@ -19,13 +18,16 @@ class 信息管道:
     def __init__(self):
         self.下游AI元=[]
 
-    def add_downstream(self,AI元:AI元,filter:Callable[[信息],bool]):
+    def add_downstream(self,AI元:'AI元',filter:Callable[[信息],bool]):
         self.下游AI元.append((AI元,filter))
 
-    async def put(self, 信息:信息):
+    async def put(self, 信息:信息, type:Literal['infor','instruction']):
         for AI元,filter in self.下游AI元:
-            if filter(信息):
-                await AI元.receive(信息)
+            if type=='infor':
+                if filter(信息):
+                    await AI元.receive(信息)
+            if type=='instruction':
+                await AI元.添加程序提示(信息)
 
 
 

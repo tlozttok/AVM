@@ -5,7 +5,6 @@ from typing import List
 from core.Information import 信息, Key
 from core.信息管道 import 信息管道
 from core.通信层 import Context, Setting, MessageRole, Message
-from 信息.角色提示信息 import 角色提示信息
 import json
 
 class 系统元:
@@ -14,7 +13,7 @@ class 系统元:
     """
 
 class 程序提示Builder:
-    raise NotImplementedError()
+    pass
 
 
 class AI元:
@@ -33,12 +32,27 @@ class AI元:
 
     输出管道:List[信息管道|asyncio.Queue[信息]]
 
+    输出接口:asyncio.Queue[信息]
+
     def __init__(self,system_prompt:str):
-        self._对话内容=Context(messages=[],setting=Setting())
+        self._对话内容=Context(messages=[],setting=Setting(model="qwen2.5-14b-instruct-1m"))
         self.背景知识=[]
         self.name=""
         self.system_prompt=system_prompt
         self._对话内容.set_system_prompt(system_prompt)
+        self._知识源=asyncio.Queue()
+        self.程序提示=asyncio.Queue()
+        self.输出管道=[]
+        self.输出接口=asyncio.Queue()
+        self.输出管道.append(self.输出接口)
+        self.输入接口=asyncio.Queue()
+
+
+    async def call(self, 信息:信息):
+        await self.程序提示.put(信息)
+        result=await self.输出接口.get()
+        return result
+
 
     async def receive(self,信息:信息):
         await self._知识源.put(信息)
@@ -51,10 +65,12 @@ class AI元:
     def 半对话轮数(self):
         return self._对话内容.统计用户消息数()
 
-    def 添加程序提示(self,程序提示:信息):
-        self.程序提示.append(程序提示)
+    async def 添加程序提示(self,程序提示:信息):
+        await self.程序提示.put(程序提示)
 
-
+    @abstractmethod
+    def filter(self, 信息: 信息)->bool:
+        raise NotImplementedError()
 
     @abstractmethod
     def extract_result(self):
@@ -89,6 +105,9 @@ class AI元:
             if self.ready_for_process():
                 await self.process()
 
+    async def run(self):
+        asyncio.create_task(self.change())
+
     async def process(self):
         result=self._对话内容.send([infor.to_string() for infor in self.背景知识])
         if self.ready_for_output(result):
@@ -106,7 +125,10 @@ class 角色提示生成AI(AI元):
         return self.半对话轮数>0
 
     def extract_result(self):
-        result=json.loads(self._对话内容.messages[-1].content)
+        result=self._对话内容.messages[-1].content
+        result=result.replace("json","")
+        result=result.replace("```","")
+        result=json.loads(result)
         result_infor=[]
         for key,value in result.items():
             infor=信息(value,Key(key))
@@ -142,8 +164,7 @@ class AI元池:
     def __getitem__(self, item):
         return self.AI元s[item]
 
-全局AI元池=AI元池()
-全局AI元池.addAI元(初始角色提示生成AI)
+
 
 
 
